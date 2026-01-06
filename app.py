@@ -8,15 +8,11 @@ from streamlit_lottie import st_lottie
 import plotly.express as px
 import plotly.graph_objects as go
 
-# --- PAGE CONFIGURATION ---
 st.set_page_config(page_title="VoiceQL",layout="wide")
-
-# --- MODERN CSS STYLING ---
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
     
-    /* Global Background */
     .main .block-container {
         background-color: #CAF0F8;
         padding-top: 2rem;
@@ -35,7 +31,6 @@ st.markdown("""
         scroll-behavior: smooth; 
     }
     
-    /* Modern Gradient Headings - Blue Financial Theme */
     h1 {
         background: linear-gradient(135deg, #023E8A 0%, #0077B6 100%);
         -webkit-background-clip: text;
@@ -58,12 +53,10 @@ st.markdown("""
         color: #023E8A;
     }
     
-    /* Global Text Color Management - Blue Financial Theme */
     body, p, div, span, label {
         color: #023E8A !important;
     }
     
-    /* Streamlit specific text elements */
     .stMarkdown p,
     .stMarkdown div,
     .stMarkdown span,
@@ -73,7 +66,6 @@ st.markdown("""
         color: #023E8A !important;
     }
     
-    /* Form labels and text */
     label,
     .stTextInput label,
     .stTextArea label,
@@ -83,25 +75,21 @@ st.markdown("""
         font-weight: 500 !important;
     }
     
-    /* Input text color */
     .stTextInput > div > div > input,
     .stTextArea > div > div > textarea {
         color: #023E8A !important;
     }
     
-    /* Button text */
     .stButton > button {
         color: white !important;
     }
     
-    /* Info boxes text */
     .stInfo,
     .stInfo p,
     .stInfo div {
         color: #023E8A !important;
     }
     
-    /* Success/Error/Warning text */
     .stSuccess p,
     .stSuccess div,
     .stError p,
@@ -111,7 +99,6 @@ st.markdown("""
         color: #023E8A !important;
     }
     
-    /* Hide anchor link icons on headings */
     h1 a, h2 a, h3 a, h4 a, h5 a, h6 a {
         display: none !important;
         visibility: hidden !important;
@@ -122,7 +109,6 @@ st.markdown("""
         padding: 0 !important;
     }
     
-    /* Hide Streamlit's anchor link icons and hash links */
     h1 .header-anchor,
     h2 .header-anchor,
     h3 .header-anchor,
@@ -137,13 +123,11 @@ st.markdown("""
         opacity: 0 !important;
     }
     
-    /* Hide anchor icons on hover */
     h1:hover a, h2:hover a, h3:hover a {
         display: none !important;
         visibility: hidden !important;
     }
     
-    /* Modern Navigation Button - Blue Financial Theme */
     .nav-btn {
         display: inline-block;
         background: #0077B6;
@@ -166,7 +150,6 @@ st.markdown("""
         background: #023E8A;
     }
     
-    /* Glassmorphism Cards - Blue Financial Theme */
     .glass-card {
         background: rgba(255, 255, 255, 0.9);
         backdrop-filter: blur(10px);
@@ -183,7 +166,6 @@ st.markdown("""
         border-color: #0077B6;
     }
     
-    /* Feature Cards - Blue Financial Theme */
     .feature-card {
         background: #ffffff;
         border-radius: 20px;
@@ -221,24 +203,20 @@ st.markdown("""
         background: #ffffff;
     }
     
-    /* Ensure Streamlit columns work with feature cards */
     div[data-testid="column"] .feature-card {
         width: 100%;
         box-sizing: border-box;
     }
     
-    /* Fix markdown container spacing */
     div[data-testid="column"] > div {
         width: 100%;
     }
     
-    /* Better card container */
     .feature-card-container {
         padding: 0;
         margin: 0;
     }
     
-    /* Section Dividers - Blue Financial Theme */
     .section-divider {
         margin: 60px 0;
         height: 1px;
@@ -246,7 +224,6 @@ st.markdown("""
         border: none;
     }
     
-    /* Modern Input Styling - Blue Financial Theme */
     .stTextInput > div > div > input {
         border-radius: 12px !important;
         border: 2px solid #90E0EF !important;
@@ -260,7 +237,6 @@ st.markdown("""
         box-shadow: 0 0 0 3px rgba(0, 119, 182, 0.1) !important;
     }
     
-    /* Modern Button Styling - Blue Financial Theme */
     .stButton > button {
         border-radius: 12px !important;
         padding: 12px 24px !important;
@@ -276,7 +252,6 @@ st.markdown("""
         color: white !important;
     }
     
-    /* Primary button override - Blue Financial Theme */
     button[data-baseweb="button"][kind="primary"],
     button[data-baseweb="button"][kind="primary"]:focus,
     button[data-baseweb="button"][kind="primary"]:active {
@@ -290,7 +265,6 @@ st.markdown("""
         color: white !important;
     }
     
-    /* Form submit button styling - Blue Financial Theme */
     .stForm button[data-baseweb="button"][kind="primary"],
     .stForm button[data-baseweb="button"][kind="primary"]:focus,
     .stForm button[data-baseweb="button"][kind="primary"]:active,
@@ -315,7 +289,6 @@ st.markdown("""
         color: white !important;
     }
     
-    /* Override any red/primary button colors globally */
     button[data-baseweb="button"][kind="primary"],
     button[data-baseweb="button"][kind="primary"]:focus,
     button[data-baseweb="button"][kind="primary"]:active,
@@ -332,7 +305,6 @@ st.markdown("""
         color: white !important;
     }
     
-    /* Hide "Press Enter to submit" form hint - only target small text hint after button */
     .stForm [data-testid="stFormSubmitButton"] + div small,
     .stForm [data-testid="stFormSubmitButton"] ~ div small,
     div[data-testid="stForm"] [data-testid="stFormSubmitButton"] + div small,
@@ -346,7 +318,6 @@ st.markdown("""
         line-height: 0 !important;
     }
     
-    /* Form Styling - Blue Financial Theme */
     .stForm {
         background: #ffffff;
         backdrop-filter: blur(10px);
@@ -356,7 +327,6 @@ st.markdown("""
         box-shadow: 0 8px 32px rgba(144, 224, 239, 0.2);
     }
     
-    /* Form text elements */
     .stForm p,
     .stForm div,
     .stForm h3,
@@ -364,13 +334,11 @@ st.markdown("""
         color: #023E8A !important;
     }
     
-    /* Help text */
     [data-testid="stTooltip"],
     .stTooltip {
         color: #023E8A !important;
     }
     
-    /* Success/Error Message Styling - Blue Financial Theme */
     .stSuccess {
         border-radius: 12px !important;
         border-left: 4px solid #0077B6 !important;
@@ -395,14 +363,12 @@ st.markdown("""
         background-color: rgba(202, 240, 248, 0.5) !important;
     }
     
-    /* Dataframe Styling */
     .dataframe {
         border-radius: 12px !important;
         overflow: hidden;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
     }
     
-    /* Tab Styling - Blue Financial Theme */
     .stTabs [data-baseweb="tab-list"] {
         gap: 8px;
         border-bottom: 2px solid #90E0EF;
@@ -427,7 +393,6 @@ st.markdown("""
         background-color: rgba(144, 224, 239, 0.1) !important;
     }
     
-    /* Expander Styling - Blue Financial Theme */
     .streamlit-expanderHeader {
         border-radius: 12px;
         font-weight: 600;
@@ -439,12 +404,10 @@ st.markdown("""
         background-color: rgba(144, 224, 239, 0.3) !important;
     }
     
-    /* Chart Color Styling - Blue Financial Theme */
     .js-plotly-plot {
         background-color: #ffffff !important;
     }
     
-    /* Bar chart colors */
     .stBarChart rect,
     .stBarChart [class*="bar"] {
         fill: #0077B6 !important;
@@ -454,13 +417,11 @@ st.markdown("""
         fill: #023E8A !important;
     }
     
-    /* Audio Input Styling */
     .stAudioInput {
         border-radius: 16px;
         overflow: hidden;
     }
     
-    /* Locked Workspace Styling - Blue Financial Theme */
     .locked-workspace {
         text-align: center;
         color: #023E8A;
@@ -478,26 +439,22 @@ st.markdown("""
         margin-bottom: 1rem;
     }
     
-    /* Unlocked Workspace Styling - Blue Financial Theme */
     .unlocked-workspace {
         margin: 0 auto;
         max-width: 800px;
         padding: 0 20px;
     }
     
-    /* Hero Section Improvements - Blue Financial Theme */
     .hero-text {
         line-height: 1.6;
         color: #023E8A;
         font-size: 1.125rem;
     }
     
-    /* Spinner Container - Blue Financial Theme */
     .stSpinner > div {
         border-top-color: #0077B6;
     }
     
-    /* Code Block Styling - Blue Financial Theme */
     code {
         background: rgba(144, 224, 239, 0.2);
         padding: 2px 6px;
@@ -506,7 +463,6 @@ st.markdown("""
         color: #023E8A;
     }
     
-    /* Streamlit Code Block Styling - Blue Financial Theme */
     .stCodeBlock,
     .stCodeBlock > div,
     .stCodeBlock pre,
@@ -545,7 +501,6 @@ st.markdown("""
         font-family: 'Fira Code', 'Courier New', monospace !important;
     }
     
-    /* Remove any dark/black backgrounds from code elements */
     *[style*="background"] code,
     *[style*="background-color"] code,
     pre[style*="background"],
@@ -554,7 +509,6 @@ st.markdown("""
         background: rgba(202, 240, 248, 0.5) !important;
     }
     
-    /* Syntax highlighting colors for SQL - Blue Financial Theme */
     .stCodeBlock .token.keyword,
     div[data-testid="stCodeBlock"] .token.keyword {
         color: #0077B6 !important;
@@ -576,7 +530,6 @@ st.markdown("""
         color: #90E0EF !important;
     }
     
-    /* Scrollbar Styling - Blue Financial Theme */
     ::-webkit-scrollbar {
         width: 8px;
         height: 8px;
@@ -596,13 +549,11 @@ st.markdown("""
         background: linear-gradient(135deg, #0077B6 0%, #023E8A 100%);
     }
     
-    /* Metrics Styling - Blue Financial Theme */
     [data-testid="stMetricValue"] {
         font-weight: 700;
         color: #023E8A;
     }
     
-    /* Navigation Links - Blue Financial Theme */
     a {
         color: #023E8A !important;
     }
@@ -613,13 +564,13 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# --- SESSION STATE ---
+# Initialize session state
 if 'api_keys' not in st.session_state:
     st.session_state.api_keys = {}
 if 'db_connected' not in st.session_state:
     st.session_state.db_connected = False
 
-# --- LOADERS & HELPERS ---
+# Helper functions
 def load_lottieurl(url):
     try:
         r = requests.get(url)
@@ -673,7 +624,6 @@ def transcribe_audio(audio_file, api_key):
         headers = {"Authorization": f"Token {api_key}", "Content-Type": "audio/*"}
         response = httpx.post(url, headers=headers, content=audio_file.getvalue(), timeout=30.0)
         
-        # Check response status first
         if response.status_code != 200:
             error_data = response.text
             try:
@@ -682,26 +632,25 @@ def transcribe_audio(audio_file, api_key):
             except:
                 pass
             error_msg = f"Deepgram API Error (Status {response.status_code}): {error_data}"
-            print(f"[ERROR] {error_msg}")  # Console logging
+            print(f"[ERROR] {error_msg}")
             st.error(error_msg)
             return None
         
-        # Parse response
         data = response.json()
         if "results" not in data:
             error_msg = f"Unexpected API response format: {data}"
-            print(f"[ERROR] {error_msg}")  # Console logging
+            print(f"[ERROR] {error_msg}")
             st.error(error_msg)
             return None
         
         if "channels" not in data["results"] or len(data["results"]["channels"]) == 0:
             error_msg = "No transcription channels found in API response"
-            print(f"[ERROR] {error_msg}")  # Console logging
+            print(f"[ERROR] {error_msg}")
             st.error(error_msg)
             return None
         
         transcript = data["results"]["channels"][0]["alternatives"][0]["transcript"]
-        print(f"[SUCCESS] Transcription: {transcript}")  # Console logging
+        print(f"[SUCCESS] Transcription: {transcript}")
         return transcript
     except KeyError as e:
         error_msg = f"Transcription Error: Missing key in API response - {e}"
@@ -712,15 +661,15 @@ def transcribe_audio(audio_file, api_key):
             except:
                 response_data = response.text
         full_error = f"{error_msg}. Response: {response_data}"
-        print(f"[ERROR] {full_error}")  # Console logging
+        print(f"[ERROR] {full_error}")
         st.error(full_error)
         return None
     except Exception as e:
         import traceback
         error_msg = f"Transcription Error: {str(e)}"
         traceback_str = traceback.format_exc()
-        print(f"[ERROR] {error_msg}")  # Console logging
-        print(f"[ERROR] Traceback:\n{traceback_str}")  # Console logging
+        print(f"[ERROR] {error_msg}")
+        print(f"[ERROR] Traceback:\n{traceback_str}")
         st.error(f"{error_msg}. Check console for full details.")
         return None
 
@@ -749,15 +698,13 @@ def execute_sql(sql_query, db_url):
     except Exception as e:
         return f"Database Error: {str(e)}"
 
-# --- LOAD ASSETS ---
+# Load animations
 lottie_voice = load_lottieurl("https://lottie.host/64299b9b-9864-448c-9418-508b4618779c/g2DkU4yQyv.json")
 lottie_data = load_lottieurl("https://lottie.host/90822361-26c7-432d-8860-262846876c27/1X2f3M3i2g.json")
 lottie_robot = load_lottieurl("https://lottie.host/5a0248c8-38c8-4721-827c-3f9f4a01c40f/P2Vj8s7q8t.json")
 
 
-# ==========================================
-# 1. HERO SECTION
-# ==========================================
+# Hero section
 st.markdown("<div style='padding: 40px 0 20px 0;'>", unsafe_allow_html=True)
 col1, col2 = st.columns([1, 1], gap="large")
 with col1:
@@ -777,16 +724,14 @@ st.markdown("</div>", unsafe_allow_html=True)
 
 st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
 
-# ==========================================
-# 2. FEATURES & HOW IT WORKS
-# ==========================================
+# Features section
 st.markdown("<h2 style='text-align: center; margin-bottom: 50px;'>Why VoiceQL?</h2>", unsafe_allow_html=True)
 c1, c2, c3 = st.columns(3, gap="large")
 
 with c1:
     st.markdown("""
     <div class="feature-card">
-        <h3>🗣️ Natural Voice</h3>
+        <h3>Natural Voice</h3>
         <p>Powered by <strong style="color: #0077B6;">Deepgram Nova-2</strong>. It understands complex queries even with background noise.</p>
     </div>
     """, unsafe_allow_html=True)
@@ -794,7 +739,7 @@ with c1:
 with c2:
     st.markdown("""
     <div class="feature-card">
-        <h3>⚡ Real-Time SQL</h3>
+        <h3>Real-Time SQL</h3>
         <p>Powered by <strong style="color: #0077B6;">Groq Llama-3</strong>. It translates English to perfect PostgreSQL in milliseconds.</p>
     </div>
     """, unsafe_allow_html=True)
@@ -802,23 +747,20 @@ with c2:
 with c3:
     st.markdown("""
     <div class="feature-card">
-        <h3>📊 Instant Viz</h3>
+        <h3>Instant Viz</h3>
         <p>Automatically visualizes your data trends. No drag-and-drop required.</p>
     </div>
     """, unsafe_allow_html=True)
 
 st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
 
-# ==========================================
-# 3. HOW IT WORKS & SETUP SECTION (Anchor: #setup-section)
-# ==========================================
+# Setup section
 st.markdown("<div id='setup-section'></div>", unsafe_allow_html=True)
 
 st.markdown("<h2 style='text-align: center; margin-bottom: 30px;'>How it works ?</h2>", unsafe_allow_html=True)
 
 c_side, c_center, c_side2 = st.columns([1, 2.5, 1], gap="medium")
 with c_center:
-    # Step 1: Connect Database
     st.markdown("""
     <div style="margin-bottom: 40px;">
         <h3 style="color: #023E8A; margin-bottom: 15px;">
@@ -835,10 +777,9 @@ with c_center:
     </div>
     """, unsafe_allow_html=True)
     
-    st.info("🔒 Your keys are processed locally. Connect to activate the workspace below.")
+    st.info("Your keys are processed locally. Connect to activate the workspace below.")
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # Safe Secret Fetching
     try:
         default_neon = st.secrets.get("NEON_DB_URL", "")
         default_groq = st.secrets.get("GROQ_API_KEY", "")
@@ -890,19 +831,18 @@ with c_center:
                     "groq": groq_input,
                     "deepgram": deepgram_input
                 }
-                with st.spinner("🌱 Seeding secure database environment..."):
+                with st.spinner("Seeding secure database environment..."):
                     success, message = seed_database(st.session_state.api_keys["neon"])
                 if success:
                     st.success(message)
                     st.session_state.db_connected = True
                     st.markdown("<br>", unsafe_allow_html=True)
-                    st.markdown('<a href="#workspace-section" class="nav-btn">⬇️ Go to Workspace</a>', unsafe_allow_html=True)
+                    st.markdown('<a href="#workspace-section" class="nav-btn">Go to Workspace</a>', unsafe_allow_html=True)
                 else:
                     st.error(f"Error: {message}")
             else:
-                st.warning("⚠️ All keys are required to proceed.")
+                st.warning("All keys are required to proceed.")
     
-    # Step 2: Ask Questions
     st.markdown("""
     <div style="margin-top: 50px; margin-bottom: 20px;">
         <h3 style="color: #023E8A; margin-bottom: 15px;">
@@ -914,7 +854,6 @@ with c_center:
     </div>
     """, unsafe_allow_html=True)
     
-    # Workspace Section - Record Yourself
     st.markdown("<div id='workspace-section'></div>", unsafe_allow_html=True)
 
     if st.session_state.db_connected:
@@ -926,12 +865,11 @@ with c_center:
         
         col_input, col_status = st.columns([3, 1], gap="medium")
         with col_input:
-            audio_value = st.audio_input("🎤 Record Voice Command", label_visibility="visible")
+            audio_value = st.audio_input("Record Voice Command", label_visibility="visible")
         with col_status:
             if lottie_robot:
                 st_lottie(lottie_robot, height=120, key="robot")
         
-        # Step 3: Watch Results
         st.markdown("""
         <div style="margin-top: 50px; margin-bottom: 20px;">
             <h3 style="color: #023E8A; margin-bottom: 15px;">
@@ -943,9 +881,8 @@ with c_center:
         </div>
         """, unsafe_allow_html=True)
         
-        # Output Sections - SQL Query, Database Results, Visualization
         if audio_value and st.session_state.db_connected:
-            with st.spinner("🎧 Transcribing your voice..."):
+            with st.spinner("Transcribing your voice..."):
                 transcript = transcribe_audio(audio_value, st.session_state.api_keys["deepgram"])
             
             if transcript:
@@ -953,48 +890,43 @@ with c_center:
                 <div style='background: linear-gradient(135deg, rgba(0, 119, 182, 0.08) 0%, rgba(144, 224, 239, 0.15) 100%); 
                             padding: 20px; border-radius: 12px; border-left: 4px solid #0077B6; 
                             margin: 20px 0;'>
-                    <strong style='color: #0077B6;'>🗣️ You asked:</strong> 
+                    <strong style='color: #0077B6;'>You asked:</strong> 
                     <span style='color: #023E8A; font-size: 1.05rem;'>"{transcript}"</span>
                 </div>
                 """, unsafe_allow_html=True)
                 
-                # Generated SQL Query
-                with st.spinner("🧠 Generating SQL query with AI..."):
+                with st.spinner("Generating SQL query with AI..."):
                     sql = text_to_sql(transcript, st.session_state.api_keys["groq"])
                     
                 if sql:
                     cleaned_sql = sql.replace("```sql", "").replace("```", "").strip()
                     
-                    st.markdown("### 📝 Generated SQL Query")
-                    with st.expander("🛠️ View Generated SQL Query", expanded=True):
+                    st.markdown("### Generated SQL Query")
+                    with st.expander("View Generated SQL Query", expanded=True):
                         st.code(cleaned_sql, language="sql")
                     
-                    # Database Query Results
-                    with st.spinner("📊 Querying database..."):
+                    with st.spinner("Querying database..."):
                         result = execute_sql(cleaned_sql, st.session_state.api_keys["neon"])
                     
                     if isinstance(result, str):
-                        st.markdown("### 📊 Database Output")
-                        st.error(f"❌ {result}")
+                        st.markdown("### Database Output")
+                        st.error(f"{result}")
                     elif result.empty:
-                        st.markdown("### 📊 Database Output")
-                        st.warning("⚠️ Query executed successfully but returned no results.")
+                        st.markdown("### Database Output")
+                        st.warning("Query executed successfully but returned no results.")
                     else:
-                        st.markdown("### 📊 Database Output")
-                        st.success("✅ Query successful! Results displayed below.")
+                        st.markdown("### Database Output")
+                        st.success("Query successful! Results displayed below.")
                         st.markdown("<br>", unsafe_allow_html=True)
                         
-                        # Visualization
-                        st.markdown("### 📈 Visualization")
-                        tab1, tab2 = st.tabs(["📊 Chart View", "📄 Raw Data"])
+                        st.markdown("### Visualization")
+                        tab1, tab2 = st.tabs(["Chart View", "Raw Data"])
                         with tab1:
                             st.markdown("<br>", unsafe_allow_html=True)
                             if len(result.columns) >= 2:
-                                # Use Plotly for better color control with blue palette
                                 try:
                                     df_chart = result.set_index(result.columns[0])
                                     if len(df_chart.columns) == 1:
-                                        # Single column - bar chart
                                         fig = px.bar(
                                             df_chart.reset_index(),
                                             x=df_chart.index.name if df_chart.index.name else 'Index',
@@ -1003,7 +935,6 @@ with c_center:
                                             labels={df_chart.columns[0]: 'Value'}
                                         )
                                     else:
-                                        # Multiple columns - use first column as x-axis
                                         fig = px.bar(
                                             df_chart.reset_index(),
                                             x=df_chart.index.name if df_chart.index.name else 'Index',
@@ -1024,7 +955,6 @@ with c_center:
                                     fig.update_traces(marker_line_color='#023E8A', marker_line_width=1)
                                     st.plotly_chart(fig, use_container_width=True)
                                 except Exception as e:
-                                    # Fallback to default bar chart
                                     st.bar_chart(result.set_index(result.columns[0]), use_container_width=True)
                             else:
                                 st.metric(label="Result", value=str(result.iloc[0,0]))

@@ -51,3 +51,51 @@
 ```bash
 git clone [https://github.com/yourusername/VoiceQL.git](https://github.com/yourusername/VoiceQL.git)
 cd VoiceQL
+```
+
+### 2. Create a Virtual Environment
+```bash
+python3 -m venv venv
+source venv/bin/activate  # On Windows use: venv\Scripts\activate
+```
+
+### 3. Install Dependencies
+```bash
+pip install streamlit pandas sqlalchemy psycopg2-binary groq httpx requests streamlit-lottie
+```
+
+### Configuration
+## You need 3 free API keys to run this project. You can enter them in the UI directly, or set them up in a secrets file for auto-loading.
+
+# Option A: UI Entry Just run the app and enter keys in the "Setup" wizard.
+
+# Option B: Secrets File (Recommended) Create a file at .streamlit/secrets.toml:
+
+```Ini, TOML
+
+NEON_DB_URL = "postgresql://user:password@ep-url.aws.neon.tech/neondb?sslmode=require"
+GROQ_API_KEY = "gsk_..."
+DEEPGRAM_API_KEY = "..."
+```
+
+### How to Run
+## Run the Streamlit app:
+
+```Bash
+streamlit run app.py
+```
+The app will open in your browser at http://localhost:8501.
+
+
+### Usage Examples
+Once the database is connected and seeded with dummy data, try asking:
+```bash
+"What is my total spending on food?"
+
+"Show me the top 3 categories by amount."
+
+"List all transactions where the merchant is Uber."
+
+"Compare spending between January and February."
+```
+
