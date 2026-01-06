@@ -8,9 +8,8 @@
 
 ## Preview
 
-(Add your screenshots here)
+[demo.webm](https://github.com/user-attachments/assets/8cad8951-2dab-4fe0-bdc4-f18967980048)
 
-![Dashboard Screenshot](path/to/your/screenshot.png)
 
 ---
 
