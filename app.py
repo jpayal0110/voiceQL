@@ -592,7 +592,34 @@ def seed_database(db_url):
     try:
         engine = create_engine(db_url)
         with engine.connect() as conn:
+            # Drop tables in reverse order of dependencies
             conn.execute(text("DROP TABLE IF EXISTS transactions;"))
+            conn.execute(text("DROP TABLE IF EXISTS merchants;"))
+            conn.execute(text("DROP TABLE IF EXISTS categories;"))
+            
+            # Create categories table
+            conn.execute(text("""
+                CREATE TABLE categories (
+                    category_id SERIAL PRIMARY KEY,
+                    name VARCHAR(50) UNIQUE NOT NULL,
+                    description TEXT,
+                    budget_limit DECIMAL(10, 2),
+                    is_essential BOOLEAN DEFAULT TRUE
+                );
+            """))
+            
+            # Create merchants table
+            conn.execute(text("""
+                CREATE TABLE merchants (
+                    merchant_id SERIAL PRIMARY KEY,
+                    name VARCHAR(100) UNIQUE NOT NULL,
+                    location VARCHAR(100),
+                    merchant_type VARCHAR(50),
+                    rating DECIMAL(3, 2)
+                );
+            """))
+            
+            # Create transactions table (with foreign keys)
             conn.execute(text("""
                 CREATE TABLE transactions (
                     id SERIAL PRIMARY KEY,
@@ -600,21 +627,65 @@ def seed_database(db_url):
                     category VARCHAR(50),
                     amount DECIMAL(10, 2),
                     merchant VARCHAR(100),
-                    type VARCHAR(10)
+                    type VARCHAR(10),
+                    category_id INTEGER,
+                    merchant_id INTEGER,
+                    FOREIGN KEY (category_id) REFERENCES categories(category_id),
+                    FOREIGN KEY (merchant_id) REFERENCES merchants(merchant_id)
                 );
             """))
+            
+            # Insert categories data
             conn.execute(text("""
-                INSERT INTO transactions (date, category, amount, merchant, type) VALUES 
-                ('2024-01-15', 'Food', 15.50, 'Burger King', 'expense'),
-                ('2024-01-16', 'Transport', 45.00, 'Uber', 'expense'),
-                ('2024-02-01', 'Salary', 5000.00, 'Tech Corp', 'income'),
-                ('2024-02-10', 'Utilities', 120.00, 'Electric Co', 'expense'),
-                ('2024-02-15', 'Food', 85.00, 'Fancy Steakhouse', 'expense'),
-                ('2024-03-05', 'Shopping', 200.00, 'Nike', 'expense'),
-                ('2024-03-10', 'Investments', 1000.00, 'Vanguard', 'expense');
+                INSERT INTO categories (name, description, budget_limit, is_essential) VALUES 
+                ('Food', 'Restaurants, groceries, and dining', 500.00, TRUE),
+                ('Transport', 'Uber, taxis, public transport', 300.00, TRUE),
+                ('Utilities', 'Electricity, water, internet bills', 200.00, TRUE),
+                ('Shopping', 'Clothing, electronics, general shopping', 1000.00, FALSE),
+                ('Investments', 'Stocks, bonds, retirement savings', 5000.00, FALSE),
+                ('Salary', 'Income from employment', NULL, FALSE),
+                ('Entertainment', 'Movies, concerts, hobbies', 200.00, FALSE);
+            """))
+            
+            # Insert merchants data
+            conn.execute(text("""
+                INSERT INTO merchants (name, location, merchant_type, rating) VALUES 
+                ('Burger King', 'New York, NY', 'Fast Food', 3.5),
+                ('Uber', 'San Francisco, CA', 'Transportation', 4.2),
+                ('Tech Corp', 'Seattle, WA', 'Employer', 4.8),
+                ('Electric Co', 'Boston, MA', 'Utility', 3.8),
+                ('Fancy Steakhouse', 'New York, NY', 'Restaurant', 4.7),
+                ('Nike', 'Portland, OR', 'Retail', 4.5),
+                ('Vanguard', 'Valley Forge, PA', 'Financial', 4.9);
+            """))
+            
+            # Insert transactions data with foreign keys
+            conn.execute(text("""
+                INSERT INTO transactions (date, category, amount, merchant, type, category_id, merchant_id) VALUES 
+                ('2024-01-15', 'Food', 15.50, 'Burger King', 'expense', 
+                 (SELECT category_id FROM categories WHERE name = 'Food'),
+                 (SELECT merchant_id FROM merchants WHERE name = 'Burger King')),
+                ('2024-01-16', 'Transport', 45.00, 'Uber', 'expense',
+                 (SELECT category_id FROM categories WHERE name = 'Transport'),
+                 (SELECT merchant_id FROM merchants WHERE name = 'Uber')),
+                ('2024-02-01', 'Salary', 5000.00, 'Tech Corp', 'income',
+                 (SELECT category_id FROM categories WHERE name = 'Salary'),
+                 (SELECT merchant_id FROM merchants WHERE name = 'Tech Corp')),
+                ('2024-02-10', 'Utilities', 120.00, 'Electric Co', 'expense',
+                 (SELECT category_id FROM categories WHERE name = 'Utilities'),
+                 (SELECT merchant_id FROM merchants WHERE name = 'Electric Co')),
+                ('2024-02-15', 'Food', 85.00, 'Fancy Steakhouse', 'expense',
+                 (SELECT category_id FROM categories WHERE name = 'Food'),
+                 (SELECT merchant_id FROM merchants WHERE name = 'Fancy Steakhouse')),
+                ('2024-03-05', 'Shopping', 200.00, 'Nike', 'expense',
+                 (SELECT category_id FROM categories WHERE name = 'Shopping'),
+                 (SELECT merchant_id FROM merchants WHERE name = 'Nike')),
+                ('2024-03-10', 'Investments', 1000.00, 'Vanguard', 'expense',
+                 (SELECT category_id FROM categories WHERE name = 'Investments'),
+                 (SELECT merchant_id FROM merchants WHERE name = 'Vanguard'));
             """))
             conn.commit()
-        return True, "Database connected and seeded successfully!"
+        return True, "Database connected and seeded successfully with 3 tables (transactions, merchants, categories)!"
     except Exception as e:
         return False, str(e)
 
@@ -677,9 +748,62 @@ def text_to_sql(query_text, api_key):
     try:
         client = Groq(api_key=api_key)
         system_prompt = """
-        You are a SQL expert. Table: 'transactions'. 
-        Cols: date, category, amount, merchant, type.
-        Return ONLY the SQL query. Example: SELECT * FROM transactions;
+        You are a SQL expert generating PostgreSQL queries. 
+
+        Database Schema:
+        
+        1. Table: 'transactions' with columns:
+        - id (SERIAL PRIMARY KEY)
+        - date (DATE type - use date functions, NOT LIKE operator)
+        - category (VARCHAR)
+        - amount (DECIMAL)
+        - merchant (VARCHAR)
+        - type (VARCHAR) - values: 'expense' or 'income'
+        - category_id (INTEGER, FOREIGN KEY → categories.category_id)
+        - merchant_id (INTEGER, FOREIGN KEY → merchants.merchant_id)
+
+        2. Table: 'categories' with columns:
+        - category_id (SERIAL PRIMARY KEY)
+        - name (VARCHAR, UNIQUE) - matches transactions.category
+        - description (TEXT)
+        - budget_limit (DECIMAL)
+        - is_essential (BOOLEAN)
+
+        3. Table: 'merchants' with columns:
+        - merchant_id (SERIAL PRIMARY KEY)
+        - name (VARCHAR, UNIQUE) - matches transactions.merchant
+        - location (VARCHAR)
+        - merchant_type (VARCHAR)
+        - rating (DECIMAL)
+
+        RELATIONSHIPS:
+        - transactions.category_id → categories.category_id
+        - transactions.merchant_id → merchants.merchant_id
+
+        IMPORTANT RULES:
+        1. For date filtering by year/pattern: Use date ranges (date >= 'YYYY-01-01' AND date < 'YYYY+1-01-01') or EXTRACT(YEAR FROM date) = YYYY
+        2. NEVER use LIKE on DATE columns - cast to text first: date::text LIKE 'pattern' if pattern matching is needed
+        3. Date comparisons: Use standard date format 'YYYY-MM-DD'
+        4. When asked about "expenses" or "expenditures", ALWAYS filter: WHERE type = 'expense'
+        5. When asked about "income" or "earnings", ALWAYS filter: WHERE type = 'income'
+        6. For aggregations by category: GROUP BY category only, NEVER group by id or date (id is unique per row, date prevents proper aggregation)
+        7. When aggregating by category AND user wants date column: Use MIN(date) or MAX(date) to get a representative date per category
+        8. Only SELECT columns needed for the result - don't include id unless explicitly requested or needed for joins
+        9. If aggregating with SUM/AVG/COUNT, you MUST use aggregate functions for all non-grouped columns (like MIN(date) or MAX(date))
+        10. When user asks about merchant details (location, rating, type) or category details (description, budget_limit, is_essential), use JOINs
+        11. For JOINs: Use INNER JOIN, LEFT JOIN, or appropriate JOIN type. Common joins:
+           - transactions JOIN categories ON transactions.category_id = categories.category_id
+           - transactions JOIN merchants ON transactions.merchant_id = merchants.merchant_id
+        12. Return ONLY the SQL query, no explanations, no markdown code blocks
+        13. Use proper PostgreSQL syntax
+
+        Examples:
+        - "transactions in 2024" → WHERE date >= '2024-01-01' AND date < '2025-01-01'
+        - "top expenses in 2024" → SELECT category, SUM(amount) AS total_amount FROM transactions WHERE EXTRACT(YEAR FROM date) = 2024 AND type = 'expense' GROUP BY category ORDER BY total_amount DESC
+        - "expenses with merchant location" → SELECT t.category, t.amount, m.location FROM transactions t JOIN merchants m ON t.merchant_id = m.merchant_id WHERE t.type = 'expense'
+        - "categories with budget limits" → SELECT c.name, c.budget_limit, SUM(t.amount) AS spent FROM categories c LEFT JOIN transactions t ON c.category_id = t.category_id GROUP BY c.name, c.budget_limit
+        - "merchants with transaction counts" → SELECT m.name, m.location, COUNT(t.id) AS transaction_count FROM merchants m LEFT JOIN transactions t ON m.merchant_id = t.merchant_id GROUP BY m.name, m.location
+        - "year 2024" → WHERE EXTRACT(YEAR FROM date) = 2024
         """
         response = client.chat.completions.create(
             messages=[{"role": "system", "content": system_prompt}, {"role": "user", "content": query_text}],
@@ -696,7 +820,205 @@ def execute_sql(sql_query, db_url):
         with engine.connect() as conn:
             return pd.read_sql(text(sql_query), conn)
     except Exception as e:
-        return f"Database Error: {str(e)}"
+        error_str = str(e)
+        # Check if it's a missing table error
+        if "does not exist" in error_str or "UndefinedTable" in error_str:
+            missing_tables = []
+            if "merchants" in error_str.lower():
+                missing_tables.append("merchants")
+            if "categories" in error_str.lower():
+                missing_tables.append("categories")
+            if "transactions" in error_str.lower():
+                missing_tables.append("transactions")
+            
+            if missing_tables:
+                return f"""Database Error: Table(s) not found: {', '.join(missing_tables)}
+
+🔧 Solution: Your database needs to be reinitialized with the new schema.
+Please go back to the "Database & API Configuration" section above and click 
+"Connect & Initialize" again to recreate the database with all required tables.
+
+Original error: {error_str}"""
+        
+        return f"Database Error: {error_str}"
+
+def create_chart(df, chart_type="Bar Chart", x_col=None, y_col=None):
+    """
+    Create a chart based on the specified chart type.
+    
+    Args:
+        df: DataFrame with the data
+        chart_type: Type of chart to create (Bar Chart, Line Chart, Pie Chart, Scatter Plot, Area Chart)
+        x_col: Column name for x-axis (optional, uses first column if None)
+        y_col: Column name for y-axis (optional, uses second column if None)
+    
+    Returns:
+        Plotly figure object
+    """
+    if df.empty or len(df.columns) < 2:
+        return None
+    
+    # Set default columns if not provided
+    if x_col is None:
+        x_col = df.columns[0]
+    if y_col is None:
+        y_col = df.columns[1] if len(df.columns) > 1 else df.columns[0]
+    
+    # Color palette matching the app theme
+    colors = ['#0077B6', '#023E8A', '#90E0EF', '#CAF0F8', '#0096C7', '#00B4D8', '#48CAE4']
+    
+    # Common layout settings
+    layout_settings = {
+        'plot_bgcolor': '#ffffff',
+        'paper_bgcolor': '#ffffff',
+        'font': dict(color='#023E8A'),
+        'showlegend': True,
+        'legend': dict(font=dict(color='#023E8A')),
+    }
+    
+    try:
+        if chart_type == "Bar Chart":
+            if len(df.columns) == 2:
+                fig = px.bar(
+                    df, 
+                    x=x_col, 
+                    y=y_col,
+                    color_discrete_sequence=[colors[0]],
+                    labels={x_col: x_col, y_col: y_col}
+                )
+            else:
+                fig = px.bar(
+                    df,
+                    x=x_col,
+                    y=[col for col in df.columns if col != x_col],
+                    color_discrete_sequence=colors[:len(df.columns)-1],
+                    labels={x_col: x_col}
+                )
+            fig.update_traces(marker_line_color='#023E8A', marker_line_width=1)
+            fig.update_layout(xaxis=dict(gridcolor='#90E0EF'), yaxis=dict(gridcolor='#90E0EF'), **layout_settings)
+            
+        elif chart_type == "Line Chart":
+            if len(df.columns) == 2:
+                fig = px.line(
+                    df, 
+                    x=x_col, 
+                    y=y_col,
+                    color_discrete_sequence=[colors[0]],
+                    markers=True,
+                    labels={x_col: x_col, y_col: y_col}
+                )
+            else:
+                fig = px.line(
+                    df,
+                    x=x_col,
+                    y=[col for col in df.columns if col != x_col],
+                    color_discrete_sequence=colors[:len(df.columns)-1],
+                    markers=True,
+                    labels={x_col: x_col}
+                )
+            fig.update_layout(xaxis=dict(gridcolor='#90E0EF'), yaxis=dict(gridcolor='#90E0EF'), **layout_settings)
+            
+        elif chart_type == "Pie Chart":
+            if len(df.columns) >= 2:
+                # For pie charts: names should be categorical, values should be numeric
+                # Auto-detect the best columns if current selection doesn't work
+                numeric_cols = df.select_dtypes(include=['number']).columns.tolist()
+                categorical_cols = df.select_dtypes(include=['object', 'string', 'category']).columns.tolist()
+                
+                # If date column exists, check if it can be treated as categorical
+                date_cols = df.select_dtypes(include=['datetime64', 'object']).columns.tolist()
+                for col in date_cols:
+                    if 'date' in col.lower() and col not in categorical_cols:
+                        categorical_cols.append(col)
+                
+                # Determine names (categorical) and values (numeric)
+                pie_names = None
+                pie_values = None
+                
+                # Check if current selection makes sense
+                if x_col in categorical_cols or str(df[x_col].dtype) == 'object':
+                    pie_names = x_col
+                    if y_col in numeric_cols:
+                        pie_values = y_col
+                elif y_col in categorical_cols or str(df[y_col].dtype) == 'object':
+                    pie_names = y_col
+                    if x_col in numeric_cols:
+                        pie_values = x_col
+                
+                # Auto-detect if current selection doesn't work
+                if pie_names is None or pie_values is None:
+                    if categorical_cols and numeric_cols:
+                        pie_names = categorical_cols[0]
+                        pie_values = numeric_cols[0]
+                    elif len(df.columns) >= 2:
+                        # Fallback: try to find any categorical and numeric columns
+                        for col in df.columns:
+                            if pie_names is None and (str(df[col].dtype) == 'object' or col in ['category', 'type', 'merchant']):
+                                pie_names = col
+                            elif pie_values is None and pd.api.types.is_numeric_dtype(df[col]):
+                                pie_values = col
+                
+                if pie_names is None or pie_values is None:
+                    return None
+                
+                fig = px.pie(
+                    df,
+                    names=pie_names,
+                    values=pie_values,
+                    color_discrete_sequence=colors
+                )
+                fig.update_traces(textposition='inside', textinfo='percent+label')
+            else:
+                return None
+            fig.update_layout(**layout_settings)
+            
+        elif chart_type == "Scatter Plot":
+            if len(df.columns) >= 2:
+                fig = px.scatter(
+                    df,
+                    x=x_col,
+                    y=y_col,
+                    color_discrete_sequence=[colors[0]],
+                    labels={x_col: x_col, y_col: y_col}
+                )
+            else:
+                return None
+            fig.update_layout(xaxis=dict(gridcolor='#90E0EF'), yaxis=dict(gridcolor='#90E0EF'), **layout_settings)
+            
+        elif chart_type == "Area Chart":
+            if len(df.columns) == 2:
+                fig = px.area(
+                    df,
+                    x=x_col,
+                    y=y_col,
+                    color_discrete_sequence=[colors[0]],
+                    labels={x_col: x_col, y_col: y_col}
+                )
+            else:
+                fig = px.area(
+                    df,
+                    x=x_col,
+                    y=[col for col in df.columns if col != x_col],
+                    color_discrete_sequence=colors[:len(df.columns)-1],
+                    labels={x_col: x_col}
+                )
+            fig.update_layout(xaxis=dict(gridcolor='#90E0EF'), yaxis=dict(gridcolor='#90E0EF'), **layout_settings)
+            
+        else:  # Default to bar chart
+            fig = px.bar(
+                df, 
+                x=x_col, 
+                y=y_col,
+                color_discrete_sequence=[colors[0]],
+                labels={x_col: x_col, y_col: y_col}
+            )
+            fig.update_traces(marker_line_color='#023E8A', marker_line_width=1)
+            fig.update_layout(xaxis=dict(gridcolor='#90E0EF'), yaxis=dict(gridcolor='#90E0EF'), **layout_settings)
+        
+        return fig
+        
+    except Exception as e:
+        return None
 
 # Load animations
 lottie_voice = load_lottieurl("https://lottie.host/64299b9b-9864-448c-9418-508b4618779c/g2DkU4yQyv.json")
@@ -924,38 +1246,68 @@ with c_center:
                         with tab1:
                             st.markdown("<br>", unsafe_allow_html=True)
                             if len(result.columns) >= 2:
-                                try:
-                                    df_chart = result.set_index(result.columns[0])
-                                    if len(df_chart.columns) == 1:
-                                        fig = px.bar(
-                                            df_chart.reset_index(),
-                                            x=df_chart.index.name if df_chart.index.name else 'Index',
-                                            y=df_chart.columns[0],
-                                            color_discrete_sequence=['#0077B6'],
-                                            labels={df_chart.columns[0]: 'Value'}
-                                        )
-                                    else:
-                                        fig = px.bar(
-                                            df_chart.reset_index(),
-                                            x=df_chart.index.name if df_chart.index.name else 'Index',
-                                            y=df_chart.columns.tolist(),
-                                            color_discrete_sequence=['#0077B6', '#023E8A', '#90E0EF', '#CAF0F8'],
-                                            labels={df_chart.index.name if df_chart.index.name else 'Index': 'Category'}
-                                        )
-                                    
-                                    fig.update_layout(
-                                        plot_bgcolor='#ffffff',
-                                        paper_bgcolor='#ffffff',
-                                        font=dict(color='#023E8A'),
-                                        xaxis=dict(gridcolor='#90E0EF'),
-                                        yaxis=dict(gridcolor='#90E0EF'),
-                                        showlegend=True,
-                                        legend=dict(font=dict(color='#023E8A'))
+                                # Chart type selector
+                                col_chart, col_info = st.columns([2, 1])
+                                with col_chart:
+                                    chart_type = st.selectbox(
+                                        "Select Chart Type",
+                                        options=["Bar Chart", "Line Chart", "Pie Chart", "Scatter Plot", "Area Chart"],
+                                        index=0,  # Default to Bar Chart
+                                        help="Choose the type of chart to visualize your data"
                                     )
-                                    fig.update_traces(marker_line_color='#023E8A', marker_line_width=1)
-                                    st.plotly_chart(fig, use_container_width=True)
+                                with col_info:
+                                    st.markdown("<br>", unsafe_allow_html=True)
+                                    st.caption("💡 Tip: Pie charts work best for category breakdowns")
+                                
+                                try:
+                                    # Column selectors - labels change based on chart type
+                                    is_pie = chart_type == "Pie Chart"
+                                    x_label = "Category/Names Column" if is_pie else "X-axis Column"
+                                    y_label = "Values Column (Numeric)" if is_pie else "Y-axis Column"
+                                    x_help = "Select categorical column for pie slice labels" if is_pie else "Select the column for the x-axis"
+                                    y_help = "Select numeric column for pie slice sizes" if is_pie else "Select the column for the y-axis"
+                                    
+                                    col_x, col_y = st.columns(2)
+                                    with col_x:
+                                        x_column = st.selectbox(
+                                            x_label,
+                                            options=result.columns.tolist(),
+                                            index=0,
+                                            help=x_help
+                                        )
+                                    with col_y:
+                                        y_options = [col for col in result.columns.tolist() if col != x_column]
+                                        if y_options:
+                                            y_column = st.selectbox(
+                                                y_label,
+                                                options=y_options,
+                                                index=0,
+                                                help=y_help
+                                            )
+                                        else:
+                                            y_column = None
+                                            st.info("No additional columns available")
+                                    
+                                    # Create chart based on selected type
+                                    if y_column is not None:
+                                        fig = create_chart(result, chart_type, x_column, y_column)
+                                        
+                                        if fig is not None:
+                                            st.plotly_chart(fig, use_container_width=True)
+                                        else:
+                                            st.warning(f"Unable to create {chart_type}. Please try a different chart type or check your data.")
+                                            # Fallback to simple bar chart
+                                            st.bar_chart(result.set_index(x_column), use_container_width=True)
+                                    else:
+                                        st.info("Please ensure you have at least 2 columns in your query result to create a chart.")
+                                        
                                 except Exception as e:
-                                    st.bar_chart(result.set_index(result.columns[0]), use_container_width=True)
+                                    st.error(f"Error creating chart: {str(e)}")
+                                    # Fallback to simple bar chart
+                                    try:
+                                        st.bar_chart(result.set_index(result.columns[0]), use_container_width=True)
+                                    except:
+                                        st.info("Please check your data format")
                             else:
                                 st.metric(label="Result", value=str(result.iloc[0,0]))
                         with tab2:
