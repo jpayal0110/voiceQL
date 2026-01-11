@@ -2,15 +2,12 @@
 
 **VoiceQL** is an AI-powered analytics platform that turns natural voice commands into executable SQL queries. Designed for non-technical users (sales reps, supply chain planners, managers), it allows you to interact with your database just by speaking.
 
-> "Stop writing SQL. Just ask."
-
 ---
 
 ## Preview
 
-(Add your screenshots here)
+[demo.webm](https://github.com/user-attachments/assets/8cad8951-2dab-4fe0-bdc4-f18967980048)
 
-![Dashboard Screenshot](path/to/your/screenshot.png)
 
 ---
 
